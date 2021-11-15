@@ -3,6 +3,7 @@ from numpy.linalg import LinAlgError
 import scipy
 from datetime import datetime
 from collections import defaultdict
+import time
 
 
 class LineSearchTool(object):
@@ -140,12 +141,41 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
     """
     history = defaultdict(list) if trace else None
     line_search_tool = get_line_search_tool(line_search_options)
-    x_k = np.copy(x_0)
+    x = np.copy(x_0)
+    initial_gradient_square = np.linalg.norm(oracle.grad(x_0))**2
+    start_time = time.perf_counter()
+    iters = 0
+    alpha = None
 
-    # TODO: Implement gradient descent
-    # Use line_search_tool.line_search() for adaptive step size.
-    return x_k, 'success', history
+    while True:
+        if iters > max_iter:
+            return x, "iterations_exceeded", history
+        gradient = oracle.grad(x)
+        alpha = line_search_tool.line_search(oracle, x, -gradient, alpha)
+        if not (valid_number(alpha) and valid_number(gradient) and valid_number(x)):
+            return x, "computational error", None
+        if trace:
+            history['time'].append(time.perf_counter() - start_time)
+            history['func'].append(oracle.func(x))
+            history['grad_norm'].append(np.linalg.norm(gradient))
+            if x.size <= 2:
+                history['x'].append(x)
 
+        if np.linalg.norm(gradient)**2 < tolerance * initial_gradient_square:
+            return x, "success", history
+        if display:
+            print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, we choose alpha = {}"
+                    .format(x, oracle.func(x), np.linalg.norm(gradient), alpha))
+        x = x - alpha * gradient
+        iters += 1
+
+    #return x_k, 'success', history
+
+def valid_number(x):
+    """
+    Checks if x is valid number.
+    """
+    return not (x is None or math.isinf(x) or math.isnan(x))
 
 def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
            line_search_options=None, trace=False, display=False):
