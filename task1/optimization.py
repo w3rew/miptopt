@@ -4,6 +4,7 @@ import scipy
 from datetime import datetime
 from collections import defaultdict
 import time
+import math
 
 
 class LineSearchTool(object):
@@ -76,6 +77,11 @@ class LineSearchTool(object):
         alpha : float or None if failure
             Chosen step size
         """
+
+        if self._method == "Constant":
+            return self.c
+
+
         # TODO: Implement line search procedures for Armijo, Wolfe and Constant steps.
         return None
 
@@ -152,7 +158,7 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
             return x, "iterations_exceeded", history
         gradient = oracle.grad(x)
         alpha = line_search_tool.line_search(oracle, x, -gradient, alpha)
-        if not (valid_number(alpha) and valid_number(gradient) and valid_number(x)):
+        if not (valid_number(alpha)) :
             return x, "computational error", None
         if trace:
             history['time'].append(time.perf_counter() - start_time)
@@ -165,7 +171,7 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
             return x, "success", history
         if display:
             print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, we choose alpha = {}"
-                    .format(x, oracle.func(x), np.linalg.norm(gradient), alpha))
+                    .format(iters, x, oracle.func(x), np.linalg.norm(gradient), alpha))
         x = x - alpha * gradient
         iters += 1
 
