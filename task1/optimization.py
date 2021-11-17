@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.linalg import LinAlgError
 import scipy
+import scipy.optimize
 from datetime import datetime
 from collections import defaultdict
 import time
@@ -80,10 +81,30 @@ class LineSearchTool(object):
 
         if self._method == "Constant":
             return self.c
+        if self._method == "Armijo":
+            if previous_alpha is None:
+                alpha = self.alpha_0
+            else:
+                alpha = 2 * previous_alpha
+            return line_search_armijo(oracle, x_k, d_k, self.c1, alpha)
+
+        if self._method == "Wolfe":
+            phi = lambda a : oracle.func_directional(x_k, d_k, a)
+            phi_der = lambda a : oracle.grad_directional(x_k, d_k, a)
+            alpha,_,_,_ = scipy.optimize.linesearch.scalar_search_wolfe2(phi, phi_der, c1 = self.c1, c2 = self.c2)
+            if alpha is None:
+                return line_search_armijo(oracle, x_k, d_k, previous_alpha)
+            return alpha
 
 
-        # TODO: Implement line search procedures for Armijo, Wolfe and Constant steps.
-        return None
+def line_search_armijo(oracle, x_k, d_k, c, initial_alpha) :
+    alpha = initial_alpha
+    phi = lambda a : oracle.func_directional(x_k, d_k, a)
+    initial_phi = phi(0)
+    initial_phi_der = oracle.grad_directional(x_k, d_k, 0)
+    while phi(alpha) > initial_phi + c * alpha * initial_phi_der:
+        alpha /= 2
+    return alpha
 
 
 def get_line_search_tool(line_search_options=None):
@@ -167,15 +188,15 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
             if x.size <= 2:
                 history['x'].append(x)
 
-        if np.linalg.norm(gradient)**2 < tolerance * initial_gradient_square:
-            return x, "success", history
         if display:
             print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, we choose alpha = {}"
                     .format(iters, x, oracle.func(x), np.linalg.norm(gradient), alpha))
+
+        if np.linalg.norm(gradient)**2 < tolerance * initial_gradient_square:
+            return x, "success", history
         x = x - alpha * gradient
         iters += 1
 
-    #return x_k, 'success', history
 
 def valid_number(x):
     """
