@@ -18,13 +18,13 @@ class BaseSmoothOracle(object):
         Computes the gradient at point x.
         """
         raise NotImplementedError('Grad oracle is not implemented.')
-    
+
     def hess(self, x):
         """
         Computes the Hessian matrix at point x.
         """
         raise NotImplementedError('Hessian oracle is not implemented.')
-    
+
     def func_directional(self, x, d, alpha):
         """
         Computes phi(alpha) = f(x + alpha*d).
@@ -57,7 +57,7 @@ class QuadraticOracle(BaseSmoothOracle):
         return self.A.dot(x) - self.b
 
     def hess(self, x):
-        return self.A 
+        return self.A
 
 
 class LogRegL2Oracle(BaseSmoothOracle):
@@ -83,19 +83,23 @@ class LogRegL2Oracle(BaseSmoothOracle):
         self.matvec_ATx = matvec_ATx
         self.matmat_ATsA = matmat_ATsA
         self.b = b
+        self.b_sqr = b * b
+        self.m = np.size(b)
         self.regcoef = regcoef
 
     def func(self, x):
-        # TODO: Implement
-        return None
+        y = -b * self.matvec_Ax(x)
+        return np.sum(np.logaddexp(np.ones(self.m), y)) + self.regcoef / 2 * np.inner(x, x)
 
     def grad(self, x):
-        # TODO: Implement
-        return None
+        y = -b * self.matvec_Ax(x)
+        return -self.matvec_ATx(b * scipy.special.expit(y)) / self.m + self.regcoef * x
 
     def hess(self, x):
-        # TODO: Implement
-        return None
+        y = -b * self.matvec_Ax(x)
+        sp = scipy.special.expit(-y)
+        vec = self.b_sqr * sp * sp * np.exp(y)
+        return np.ones(n) * self.regcoef + 1/m * self.matmat_ATsA(vec)
 
 
 class LogRegL2OptimizedOracle(LogRegL2Oracle):
@@ -155,7 +159,7 @@ def hess_finite_diff(func, x, eps=1e-5):
     """
     Returns approximation of the Hessian using finite differences:
         result_{ij} := (f(x + eps * e_i + eps * e_j)
-                               - f(x + eps * e_i) 
+                               - f(x + eps * e_i)
                                - f(x + eps * e_j)
                                + f(x)) / eps^2,
         where e_i are coordinate vectors:
