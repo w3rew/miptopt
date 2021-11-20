@@ -88,18 +88,19 @@ class LogRegL2Oracle(BaseSmoothOracle):
         self.regcoef = regcoef
 
     def func(self, x):
-        y = -b * self.matvec_Ax(x)
-        return np.sum(np.logaddexp(np.ones(self.m), y)) + self.regcoef / 2 * np.inner(x, x)
+        y = -self.b * self.matvec_Ax(x)
+        return 1 / self.m * np.sum(np.logaddexp(np.zeros(self.m), y)) + self.regcoef / 2 * np.inner(x, x)
 
     def grad(self, x):
-        y = -b * self.matvec_Ax(x)
-        return -self.matvec_ATx(b * scipy.special.expit(y)) / self.m + self.regcoef * x
+        y = -self.b * self.matvec_Ax(x)
+        return -self.matvec_ATx(self.b * scipy.special.expit(y)) / self.m + self.regcoef * x
 
     def hess(self, x):
-        y = -b * self.matvec_Ax(x)
+        n = np.size(x)
+        y = -self.b * self.matvec_Ax(x)
         sp = scipy.special.expit(-y)
         vec = self.b_sqr * sp * sp * np.exp(y)
-        return np.ones(n) * self.regcoef + 1/m * self.matmat_ATsA(vec)
+        return self.regcoef * np.eye(n) + 1 / self.m * self.matmat_ATsA(vec)
 
 
 class LogRegL2OptimizedOracle(LogRegL2Oracle):
@@ -126,12 +127,11 @@ def create_log_reg_oracle(A, b, regcoef, oracle_type='usual'):
     Auxiliary function for creating logistic regression oracles.
         `oracle_type` must be either 'usual' or 'optimized'
     """
-    matvec_Ax = lambda x: x  # TODO: Implement
-    matvec_ATx = lambda x: x  # TODO: Implement
+    matvec_Ax = lambda x: A.dot(x)
+    matvec_ATx = lambda x: A.transpose().dot(x)
 
     def matmat_ATsA(s):
-        # TODO: Implement
-        return None
+        return A.transpose().dot(np.diag(s)).dot(A)
 
     if oracle_type == 'usual':
         oracle = LogRegL2Oracle
@@ -151,8 +151,10 @@ def grad_finite_diff(func, x, eps=1e-8):
         e_i = (0, 0, ..., 0, 1, 0, ..., 0)
                           >> i <<
     """
-    # TODO: Implement numerical estimation of the gradient
-    return None
+    n = np.size(x)
+    grad = [(func(x + eps * np.array([1 if j == i else 0 for j in range(n)])) -
+        func(x - eps * np.array([1 if j == i else 0 for j in range(n)]))) / (2 * eps) for i in range(n)]
+    return np.array(grad)
 
 
 def hess_finite_diff(func, x, eps=1e-5):
@@ -166,5 +168,14 @@ def hess_finite_diff(func, x, eps=1e-5):
         e_i = (0, 0, ..., 0, 1, 0, ..., 0)
                           >> i <<
     """
-    # TODO: Implement numerical estimation of the Hessian
-    return None
+    def base_vec(elem, n):
+        return np.array([1 if i == elem else 0 for i in range(n)])
+    n = np.size(x)
+    res = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            base_i = base_vec(i, n)
+            base_j = base_vec(j, n)
+            res[i, j] = (func(x + eps * base_i + eps * base_j) -
+                    func(x + eps * base_i) - func(x + eps * base_j) + func(x)) / eps / eps
+    return res

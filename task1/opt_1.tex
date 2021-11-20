@@ -37,27 +37,38 @@ exponent-product={}\cdot, output-decimal-marker={,}]{siunitx}
 \section*{3}
 Логистическая регрессия
 \begin{equation}
-  \min_{x \in \mathbb{R}^n} \left\{f(x) = \frac 1m\inner{\ln\left[1 + \exp\left(-b \odot \left(A^T x\right)\right)\right]}{1_m}
+  \min_{x \in \mathbb{R}^n} \left\{f(x) = \frac 1m\inner{\ln\left[1 + \exp\left(-b \odot \left(A x\right)\right)\right]}{1_m}
   + \frac{\lambda}2 \norm{x}^2\right\}
 \end{equation}
-Здесь $b$ --- вектор из $b_i$, $A$ -- матрица $n \times m$, в которой столбцы являются векторами $a_i$.
+Здесь $b$ --- вектор из $b_i$, $A^T$ -- матрица $m \times n$, в которой строки являются векторами $a_i$.
 
 \begin{equation}
   \begin{aligned}
-    \operatorname{D} f(x) &= \lambda x - \frac Am\left(b\odot\frac{\exp\left(-b \odot \left(A^T x\right)\right)}
-  {1 + \exp\left(-b \odot \left(A^T x\right)\right)}\right) = 
-  \lambda x - \frac A m\left(b\odot u\left[-b\odot \left(A x\right)\right]\right)\\
-  u(y) &= \frac{e^y}{1 + e^y}
+    \operatorname{D} f(x) &= \lambda x - \frac {A^T} m\left(b\odot\frac{\exp\left(-b \odot \left(A x\right)\right)}
+  {1 + \exp\left(-b \odot \left(A x\right)\right)}\right) = 
+  \lambda x - \frac {A^T} m\left(b\odot u\left[-b\odot \left(A x\right)\right]\right)\\
+  u(y) &= \frac{e^y}{1 + e^y} = \frac1{1 + e^{-y}}
   \end{aligned}
 \end{equation}
 Здесь использовано много свойств произведения Адамара.
 
 \begin{equation}
-  \begin{aligned}
-    \dv{u}{y} &= \frac{e^y(1 + e^y) - e^{2y}}{(1 + e^y)^2} = \frac{e^y}{(1 + e^y)^2}\\
-    \operatorname{D}^2 f &= \lambda \dd x + \frac Am \left(b\odot \frac{e^y}{(1 + e^y)^2} \odot b \odot \left(A \dd x \right)\right) = 
-    \lambda + \frac Am \left\{\left[\left(b \odot b \odot \frac{e^y}{(1 + e^y)^2}[-b \odot (Ax)]\right) 1_n^T\right] \odot A\right\}
-  \end{aligned}
+    \dv{u}{y} = \frac{e^y(1 + e^y) - e^{2y}}{(1 + e^y)^2} = \frac{e^y}{(1 + e^y)^2}\\
+    \end{equation}
+\begin{equation}
+  \operatorname{D}^2 f[\dd x] = \lambda \dd x + \frac {A^T}m \left(b\odot \frac{e^y}{(1 + e^y)^2} \odot b \odot \left(A \dd x \right)\right)
+    \end{equation}
+\begin{equation}
+  \operatorname{D}^2 f = 
+  \lambda + \frac {A^T}m \left\{\left[\left(b \odot b \odot \frac{e^y}{(1 + e^y)^2}[-b \odot (Ax)]\right) 1_n^T\right] \odot A\right\}
+\end{equation}
+Потратив еще \textit{немного} времени, можно понять, что это выражение можно переписать как
+\begin{equation}
+  \operatorname{D}^2 f = \lambda + \frac 1m \cdot A^T \operatorname{diag}\left\{b\odot b \odot v(-b \odot \left(A x\right))\right\} A
+\end{equation}
+где
+\begin{equation}
+  v(y) = \frac{e^y}{(1 + e^y)^2}
 \end{equation}
 			
 \end{document}
