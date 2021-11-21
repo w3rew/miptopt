@@ -118,7 +118,7 @@ def get_line_search_tool(line_search_options=None):
 
 
 def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
-                     line_search_options=None, trace=False, display=False):
+                     line_search_options={}, trace=False, display=False):
     """
     Gradien descent optimization method.
 
@@ -167,7 +167,7 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
        Found optimal point: [ 0.  1.  2.  3.  4.]
     """
     history = defaultdict(list) if trace else None
-    line_search_tool = get_line_search_tool(line_search_options)
+    line_search_tool = LineSearchTool(**line_search_options)
     x = np.copy(x_0)
     initial_gradient_square = np.linalg.norm(oracle.grad(x_0))**2
     start_time = time.perf_counter()
@@ -205,7 +205,7 @@ def valid_number(x):
     return not (x is None or math.isinf(x) or math.isnan(x))
 
 def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
-           line_search_options=None, trace=False, display=False):
+           line_search_options={}, trace=False, display=False):
     """
     Newton's optimization method.
 
@@ -255,8 +255,43 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
        Found optimal point: [ 0.  1.  2.  3.  4.]
     """
     history = defaultdict(list) if trace else None
-    line_search_tool = get_line_search_tool(line_search_options)
-    x_k = np.copy(x_0)
+    line_search_options.pop('alpha_0', None)
+    line_search_tool = LineSearchTool(**line_search_options, alpha_0 = 1.)
+    x = np.copy(x_0)
+    initial_gradient_square = np.linalg.norm(oracle.grad(x_0))**2
+    start_time = time.perf_counter()
+    iters = 0
+    alpha = None
+
+    while True:
+        if iters > max_iter:
+            return x, "iterations_exceeded", history
+        gradient = oracle.grad(x)
+        hess = oracle.hess(x)
+        try:
+            decomposition = scipy.linalg.cho_factor(hess)
+        except LinAlgError:
+            return x, "computational error", history
+        d = scipy.linalg.cho_solve(decomposition, -gradient)
+
+        alpha = line_search_tool.line_search(oracle, x, d)
+        if not (valid_number(alpha)) :
+            return x, "computational error", history
+        if trace:
+            history['time'].append(time.perf_counter() - start_time)
+            history['func'].append(oracle.func(x))
+            history['grad_norm'].append(np.linalg.norm(gradient))
+            if x.size <= 2:
+                history['x'].append(x)
+
+        if display:
+            print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, \n hess f is :{},\n we choose alpha = {}"
+                    .format(iters, x, oracle.func(x), np.linalg.norm(gradient), hess, alpha))
+
+        if np.linalg.norm(gradient)**2 < tolerance * initial_gradient_square:
+            return x, "success", history
+        x = x - alpha * gradient
+        iters += 1
 
     # TODO: Implement Newton's method.
     # Use line_search_tool.line_search() for adaptive step size.
