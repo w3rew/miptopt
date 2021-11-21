@@ -11,7 +11,7 @@
 %\usepackage[default]{droidserif}
 %\usepackage{XCharter} %bold
 %
-\usepackage{tikz, enumerate, graphicx, amsmath, amssymb, physics}
+\usepackage{tikz, enumerate, graphicx, amsmath, amssymb, physics, caption}
 \usepackage[separate-uncertainty=true, 
 exponent-product={}\cdot, output-decimal-marker={,}]{siunitx}
 \usetikzlibrary{calc,intersections, decorations.pathreplacing}
@@ -70,5 +70,59 @@ exponent-product={}\cdot, output-decimal-marker={,}]{siunitx}
 \begin{equation}
   v(y) = \frac{e^y}{(1 + e^y)^2}
 \end{equation}
+\section{Эксперимент: траектория градиентного спуска}
+Построение графиков выполнено при помощи скрипта ``gradplots/trajectory.py''. 
+\begin{figure}[ht]
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/trajectory_0_0.png}
+  \captionof{figure}{Постоянный шаг, хорошо обусловленная матрица.}
+\end{minipage}
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/trajectory_1_0.png}
+  \captionof{figure}{Постоянный шаг, плохо обусловленная матрица.}
+\end{minipage}
+\end{figure}
+Для хорошо обусловленной матрицы поиск останавливается за 109000 шагов, а для плохо обусловленной за 69000.
+Скорее всего так происходит из-за того, что в хорошо обсусловленной матрице метод постоянно проскакивает оптимальную точку
+из-за высокой требуемой точности.
+
+\begin{figure}[ht]
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/trajectory_0_1.png}
+  \captionof{figure}{Условие Армихо, хорошо обусловленная матрица.}
+\end{minipage}
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/trajectory_1_1.png}
+  \captionof{figure}{Условие Армихо, плохо обусловленная матрица.}
+\end{minipage}
+\end{figure}
+Теперь все встало на свои места: для хорошо обусловленной матрицы метод сходится всего за 18 шагов. Для плохо обусловленной
+требуется 327 шагов. Видно, что в первом случае довольно быстро тракетория становится прямой, а во втором случае она все время
+колеблется вокруг оптимального пути и совершает больше шагов, чем нужно.
+
+\begin{figure}[ht]
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/trajectory_0_2.png}
+  \captionof{figure}{Условие Вольфа, хорошо обусловленная матрица.}
+\end{minipage}
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/trajectory_1_2.png}
+  \captionof{figure}{Условие Вольфа, плохо обусловленная матрица.}
+\end{minipage}
+\end{figure}
+Для условия Вольфа ситуация аналогичная первому случаю: для хорошо обусловленной матрицы метод работает ``слишком хорошо'' и
+проскакивает точку экстремума. Метод сходится за 18 шагов. Для плохо обусловленной матрицы требуется всего 4 шага.
+Понятно, что в общем случае для хорошо обусловленой матрицы метод Вольфа тоже работает хорошо, и некоторое $O(1)$ количество
+операций в конце, связанное с проскакиванием, роли не играет.
+
+При этом, конечно, чем ближе прямая градиента к оптимальной точке, тем быстрее будут работать все методы, потому что траектория будет
+ближе к прямой.
+			
 			
 \end{document}

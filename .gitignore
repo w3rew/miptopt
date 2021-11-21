@@ -1,2 +1,7 @@
 *.pyc
+sys
+plt
+*.log
+*.aux
+
 

@@ -85,7 +85,7 @@ class LineSearchTool(object):
             if previous_alpha is None:
                 alpha = self.alpha_0
             else:
-                alpha = previous_alpha #FIXME: 2 * previous_alpha
+                alpha = 2 * previous_alpha #FIXME: 2 * previous_alpha
             return line_search_armijo(oracle, x_k, d_k, self.c1, alpha)
 
         if self._method == "Wolfe":
@@ -188,7 +188,7 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
             history['grad_norm'].append(np.linalg.norm(gradient))
             if x.size <= 2:
                 history['x'].append(x)
-        alpha = line_search_tool.line_search(oracle, x, -gradient, alpha) #FIXME: previous_alpha = alpha
+        alpha = line_search_tool.line_search(oracle, x, -gradient, alpha)
         if not (valid_number(alpha)) :
             return x, "computational_error", None
 

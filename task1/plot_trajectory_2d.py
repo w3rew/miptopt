@@ -45,7 +45,7 @@ def plot_trajectory(func, history, fit_axis=False, label=None):
     >> plot_trajectory(oracle.func, history['x'])
     """
     x_values, y_values = zip(*history)
-    plt.plot(x_values, y_values, '-v', linewidth=2.0, ms=4.0,
+    plt.plot(x_values, y_values, '-v', linewidth=1.0, ms=2.0,
              alpha=1.0, c='r', label=label)
 
     # Tries to adapt axis-ranges for the trajectory:
