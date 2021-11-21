@@ -85,7 +85,7 @@ class LineSearchTool(object):
             if previous_alpha is None:
                 alpha = self.alpha_0
             else:
-                alpha = 2 * previous_alpha
+                alpha = previous_alpha #FIXME: 2 * previous_alpha
             return line_search_armijo(oracle, x_k, d_k, self.c1, alpha)
 
         if self._method == "Wolfe":
@@ -178,21 +178,21 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
         if iters > max_iter:
             return x, "iterations_exceeded", history
         gradient = oracle.grad(x)
-        alpha = line_search_tool.line_search(oracle, x, -gradient, alpha)
-        if not (valid_number(alpha)) :
-            return x, "computational error", None
         if trace:
             history['time'].append(time.perf_counter() - start_time)
             history['func'].append(oracle.func(x))
             history['grad_norm'].append(np.linalg.norm(gradient))
             if x.size <= 2:
                 history['x'].append(x)
+        alpha = line_search_tool.line_search(oracle, x, -gradient, alpha)
+        if not (valid_number(alpha)) :
+            return x, "computational_error", None
 
         if display:
             print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, we choose alpha = {}"
                     .format(iters, x, oracle.func(x), np.linalg.norm(gradient), alpha))
 
-        if np.linalg.norm(gradient)**2 < tolerance * initial_gradient_square:
+        if np.inner(gradient, gradient) <= tolerance * initial_gradient_square:
             return x, "success", history
         x = x - alpha * gradient
         iters += 1
@@ -258,39 +258,41 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
     line_search_options.pop('alpha_0', None)
     line_search_tool = LineSearchTool(**line_search_options, alpha_0 = 1.)
     x = np.copy(x_0)
-    initial_gradient_square = np.linalg.norm(oracle.grad(x_0))**2
+    initial_gradient_square = np.inner(oracle.grad(x_0), oracle.grad(x_0))
     start_time = time.perf_counter()
     iters = 0
     alpha = None
 
     while True:
-        if iters > max_iter:
-            return x, "iterations_exceeded", history
         gradient = oracle.grad(x)
-        hess = oracle.hess(x)
-        try:
-            decomposition = scipy.linalg.cho_factor(hess)
-        except LinAlgError:
-            return x, "computational error", history
-        d = scipy.linalg.cho_solve(decomposition, -gradient)
-
-        alpha = line_search_tool.line_search(oracle, x, d)
-        if not (valid_number(alpha)) :
-            return x, "computational error", history
         if trace:
             history['time'].append(time.perf_counter() - start_time)
             history['func'].append(oracle.func(x))
             history['grad_norm'].append(np.linalg.norm(gradient))
             if x.size <= 2:
                 history['x'].append(x)
+        if np.inner(gradient, gradient) <= tolerance * initial_gradient_square:
+            if display:
+                print("Found singular point: {}, grad norm: {}".format(x, np.linalg.norm(gradient)))
+            return x, "success", history
+        if iters > max_iter:
+            return x, "iterations_exceeded", history
+        hess = oracle.hess(x)
+        try:
+            decomposition = scipy.linalg.cho_factor(hess)
+        except LinAlgError:
+            return x, "computational_error", history
+        d = scipy.linalg.cho_solve(decomposition, -gradient)
+
+        alpha = line_search_tool.line_search(oracle, x, d)
+        if not (valid_number(alpha)) :
+            return x, "computational_error", history
 
         if display:
             print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, \n hess f is :{},\n we choose alpha = {}"
                     .format(iters, x, oracle.func(x), np.linalg.norm(gradient), hess, alpha))
 
-        if np.linalg.norm(gradient)**2 < tolerance * initial_gradient_square:
-            return x, "success", history
-        x = x - alpha * gradient
+        x = x + alpha * d
         iters += 1
 
     # TODO: Implement Newton's method.

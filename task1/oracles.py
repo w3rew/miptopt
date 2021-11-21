@@ -127,11 +127,11 @@ def create_log_reg_oracle(A, b, regcoef, oracle_type='usual'):
     Auxiliary function for creating logistic regression oracles.
         `oracle_type` must be either 'usual' or 'optimized'
     """
-    matvec_Ax = lambda x: A.dot(x)
-    matvec_ATx = lambda x: A.transpose().dot(x)
+    matvec_Ax = lambda x: A @ x
+    matvec_ATx = lambda x: A.transpose() @ x
 
     def matmat_ATsA(s):
-        return A.transpose().dot(np.diag(s)).dot(A)
+        return A.transpose() @ np.diag(s) @ A
 
     if oracle_type == 'usual':
         oracle = LogRegL2Oracle
