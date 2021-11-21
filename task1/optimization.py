@@ -93,7 +93,11 @@ class LineSearchTool(object):
             phi_der = lambda a : oracle.grad_directional(x_k, d_k, a)
             alpha,_,_,_ = scipy.optimize.linesearch.scalar_search_wolfe2(phi, phi_der, c1 = self.c1, c2 = self.c2)
             if alpha is None:
-                return line_search_armijo(oracle, x_k, d_k, previous_alpha)
+                if previous_alpha is None:
+                    alpha = self.alpha_0
+                else:
+                    alpha = previous_alpha * 2
+                return line_search_armijo(oracle, x_k, d_k, self.c1, alpha)
             return alpha
 
 
@@ -184,7 +188,7 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
             history['grad_norm'].append(np.linalg.norm(gradient))
             if x.size <= 2:
                 history['x'].append(x)
-        alpha = line_search_tool.line_search(oracle, x, -gradient, alpha)
+        alpha = line_search_tool.line_search(oracle, x, -gradient, alpha) #FIXME: previous_alpha = alpha
         if not (valid_number(alpha)) :
             return x, "computational_error", None
 
@@ -295,6 +299,4 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
         x = x + alpha * d
         iters += 1
 
-    # TODO: Implement Newton's method.
-    # Use line_search_tool.line_search() for adaptive step size.
     return x_k, 'success', history
