@@ -130,8 +130,13 @@ def create_log_reg_oracle(A, b, regcoef, oracle_type='usual'):
     matvec_Ax = lambda x: A @ x
     matvec_ATx = lambda x: A.transpose() @ x
 
-    def matmat_ATsA(s):
-        return A.transpose() @ np.diag(s) @ A
+    if type(A) == scipy.sparse.csr_matrix:
+        def matmat_ATsA(s):
+            return A.transpose() @ scipy.sparse.diags(s) @ A
+    else:
+        def matmat_ATsA(s):
+            return A.transpose() @ np.diag(s) @ A
+
 
     if oracle_type == 'usual':
         oracle = LogRegL2Oracle

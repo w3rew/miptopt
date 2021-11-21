@@ -182,6 +182,10 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
         if iters > max_iter:
             return x, "iterations_exceeded", history
         gradient = oracle.grad(x)
+        if np.inner(gradient, gradient) <= tolerance * initial_gradient_square:
+            if display:
+                print("Found singular point: {}, grad norm: {}".format(x, np.linalg.norm(gradient)))
+            return x, "success", history
         if trace:
             history['time'].append(time.perf_counter() - start_time)
             history['func'].append(oracle.func(x))
@@ -193,11 +197,9 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
             return x, "computational_error", None
 
         if display:
-            print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, we choose alpha = {}"
-                    .format(iters, x, oracle.func(x), np.linalg.norm(gradient), alpha))
+            print("iteration {}: f(x) is {}, grad f norm is {}, we choose alpha = {}"
+                    .format(iters, oracle.func(x), np.linalg.norm(gradient), alpha))
 
-        if np.inner(gradient, gradient) <= tolerance * initial_gradient_square:
-            return x, "success", history
         x = x - alpha * gradient
         iters += 1
 
@@ -293,8 +295,8 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
             return x, "computational_error", history
 
         if display:
-            print("iteration {}: x is {}, f(x) is {}, grad f norm is {}, \n hess f is :{},\n we choose alpha = {}"
-                    .format(iters, x, oracle.func(x), np.linalg.norm(gradient), hess, alpha))
+            print("iteration {}: f(x) is {}, grad f norm is {}, we choose alpha = {}"
+                    .format(iters, oracle.func(x), np.linalg.norm(gradient), alpha))
 
         x = x + alpha * d
         iters += 1
