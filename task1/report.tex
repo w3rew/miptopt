@@ -12,6 +12,7 @@
 %\usepackage{XCharter} %bold
 %
 \usepackage{tikz, enumerate, graphicx, amsmath, amssymb, physics, caption}
+\usepackage[section]{placeins}
 \usepackage[separate-uncertainty=true, 
 exponent-product={}\cdot, output-decimal-marker={,}]{siunitx}
 \usetikzlibrary{calc,intersections, decorations.pathreplacing}
@@ -71,7 +72,7 @@ exponent-product={}\cdot, output-decimal-marker={,}]{siunitx}
   v(y) = \frac{e^y}{(1 + e^y)^2}
 \end{equation}
 \section{Эксперимент: траектория градиентного спуска}
-Построение графиков выполнено при помощи скрипта ``gradplots/trajectory.py''. 
+Построение графиков выполнено при помощи скрипта ``grad\_trajectory.py''. 
 \begin{figure}[ht]
 \begin{minipage}[t]{.5\textwidth}
   \centering
@@ -123,6 +124,30 @@ exponent-product={}\cdot, output-decimal-marker={,}]{siunitx}
 
 При этом, конечно, чем ближе прямая градиента к оптимальной точке, тем быстрее будут работать все методы, потому что траектория будет
 ближе к прямой.
+
+\section*{Эксперимент: зависимость числа итераций итераций градиентного спуска от числа обусловленности и размерности пространства}
+Выборка генерируется при помощи скрипта ``perf\_plots.py'' так, как ьыло рекомендовано в задании:
+генерируется диагональная матрица, далее у нее фиксируется число обусловленности. Потом случайным образом выбираются $x_0$ и $b$.
+Получившиеся семейства кривых изображены на рисунке \ref{fig:perfplot}
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth, keepaspectratio]{plots/perf_gradients.png}
+  \caption{Зависимость числа итераций от числа обусловленности и размерности пространства}
+  \label{fig:perfplot}
+\end{figure}
+
+Видно, что от размерности пространства количество итераций не зависит. А вот с ростом числа обусловленности количество
+итераций растет. Причем рост, хотя это и сложно определить, похож на линейный. Линейный рост можно объяснить так:
+\begin{equation}
+  f(x_k) - f^* \leq \frac L2 \left(\frac{\kappa - 1}{\kappa + 1}\right)^{2k} \norm{x_0 - x^*}^2
+\end{equation}
+Отсюда
+\begin{equation}
+  k = \frac{\ln\alpha}{2\ln\left(\dfrac{\kappa - 1}{\kappa + 1}\right)} \approx -\kappa\ln\alpha 
+\end{equation}
+из Тейлоровского разложение при $\kappa \gg 1$.
+
+
 			
 			
 \end{document}
