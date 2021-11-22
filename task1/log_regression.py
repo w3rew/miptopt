@@ -17,7 +17,7 @@ oracle = create_log_reg_oracle(X, y, 1 / m)
 tolerance = 1e-10
 x_0 = np.zeros(n)
 if method == 'newton':
-    trained, message, history = optimization.newton(oracle, x_0, tolerance, trace = True, display = True)
+    trained, message, history = optimization.newton(oracle, x_0, tolerance, trace = True, display = True, max_iter = 1000000)
 elif method == 'grad':
     trained, message, history = optimization.gradient_descent(oracle, x_0, tolerance, trace = True, display = True)
 else:
