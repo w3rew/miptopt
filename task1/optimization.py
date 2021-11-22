@@ -85,7 +85,7 @@ class LineSearchTool(object):
             if previous_alpha is None:
                 alpha = self.alpha_0
             else:
-                alpha = 2 * previous_alpha #FIXME: 2 * previous_alpha
+                alpha = previous_alpha #FIXME: 2 * previous_alpha
             return line_search_armijo(oracle, x_k, d_k, self.c1, alpha)
 
         if self._method == "Wolfe":
@@ -182,10 +182,6 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
         if iters > max_iter:
             return x, "iterations_exceeded", history
         gradient = oracle.grad(x)
-        if np.inner(gradient, gradient) <= tolerance * initial_gradient_square:
-            if display:
-                print("Found singular point: {}, grad norm: {}".format(x, np.linalg.norm(gradient)))
-            return x, "success", history
         if trace:
             history['time'].append(time.perf_counter() - start_time)
             history['func'].append(oracle.func(x))
@@ -199,6 +195,10 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
         if display:
             print("iteration {}: f(x) is {}, grad f norm is {}, we choose alpha = {}"
                     .format(iters, oracle.func(x), np.linalg.norm(gradient), alpha))
+        if np.inner(gradient, gradient) <= tolerance * initial_gradient_square:
+            if display:
+                print("Found singular point: {}, grad norm: {}".format(x, np.linalg.norm(gradient)))
+            return x, "success", history
 
         x = x - alpha * gradient
         iters += 1
