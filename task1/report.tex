@@ -147,7 +147,46 @@ exponent-product={}\cdot, output-decimal-marker={,}]{siunitx}
 \end{equation}
 из Тейлоровского разложение при $\kappa \gg 1$.
 
+\section*{Эксперимент: Сравнение методов градиентного спуска и Ньютона на реальной задаче логистической регрессии}
 
+\begin{figure}[ht]
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/w8a_plot_func.png}
+  \captionof{figure}{Датасет w8a, значения функции}
+\end{minipage}
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/w8a_plot_grad.png}
+  \captionof{figure}{Датасет w8a, значения градиента}
+\end{minipage}
+\end{figure}
+\begin{figure}[ht]
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/gisette_scale.bz2_plot_func.png}
+  \captionof{figure}{Датасет gisette, значения функции}
+\end{minipage}
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/gisette_scale.bz2_plot_grad.png}
+  \captionof{figure}{Датасет gisette, значения градиента}
+\end{minipage}
+\end{figure}
+\begin{figure}[ht]
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/real-sim.bz2_plot_func.png}
+  \captionof{figure}{Датасет real-sim, значения функции}
+\end{minipage}
+\begin{minipage}[t]{.5\textwidth}
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio]{plots/real-sim.bz2_plot_grad.png}
+  \captionof{figure}{Датасет real-sim, значения градиента}
+\end{minipage}
+\end{figure}
+
+На одну итерацию градиентному спуску требуется $O(n)$ памяти, поскольку хранятся только векторы $x$ и $\nabla f$
 			
 			
 \end{document}

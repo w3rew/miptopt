@@ -29,7 +29,6 @@ for log_n in range(N):
             A, b, x_0 = generate_task(n, k)
             oracle = quadratic_oracle(A, b)
             _, message, history = optimization.gradient_descent(oracle, x_0, tolerance = 1e-7, line_search_options = lso, trace = True)
-            print(history)
             if message != "success":
                 print("Error while testing!")
                 sys.exit(1)
