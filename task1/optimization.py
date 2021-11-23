@@ -6,6 +6,7 @@ from datetime import datetime
 from collections import defaultdict
 import time
 import math
+from sksparse.cholmod import CholmodError
 
 
 class LineSearchTool(object):
@@ -285,10 +286,9 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
             return x, "iterations_exceeded", history
         hess = oracle.hess(x)
         try:
-            decomposition = scipy.linalg.cho_factor(hess)
-        except LinAlgError:
+            d = oracle.solver(hess, gradient)
+        except (LinAlgError, CholmodError):
             return x, "computational_error", history
-        d = scipy.linalg.cho_solve(decomposition, -gradient)
 
         alpha = line_search_tool.line_search(oracle, x, d)
         if not (valid_number(alpha)) :

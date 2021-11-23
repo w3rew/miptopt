@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 from scipy.special import expit
+import sksparse
 
 
 class BaseSmoothOracle(object):
@@ -60,6 +61,11 @@ class QuadraticOracle(BaseSmoothOracle):
         return self.A
 
 
+def default_solver(hess, grad):
+    decomposition = scipy.linalg.cho_factor(hess)
+    d = scipy.linalg.cho_solve(decomposition, -grad)
+    return d
+
 class LogRegL2Oracle(BaseSmoothOracle):
     """
     Oracle for logistic regression with l2 regularization:
@@ -77,8 +83,11 @@ class LogRegL2Oracle(BaseSmoothOracle):
             Computes matrix-vector product A^Tx, where x is a vector of size m.
         matmat_ATsA : function
             Computes matrix-matrix-matrix product A^T * Diag(s) * A,
+        scalar : function
+            Computes identity matrix, either sparse or np.array
+
     """
-    def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef):
+    def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef, identity = np.eye, solver = default_solver):
         self.matvec_Ax = matvec_Ax
         self.matvec_ATx = matvec_ATx
         self.matmat_ATsA = matmat_ATsA
@@ -86,6 +95,8 @@ class LogRegL2Oracle(BaseSmoothOracle):
         self.b_sqr = b * b
         self.m = np.size(b)
         self.regcoef = regcoef
+        self.identity = identity
+        self.solver = solver
 
     def func(self, x):
         y = -self.b * self.matvec_Ax(x)
@@ -100,7 +111,7 @@ class LogRegL2Oracle(BaseSmoothOracle):
         y = -self.b * self.matvec_Ax(x)
         sp = scipy.special.expit(-y)
         vec = self.b_sqr * sp * sp * np.exp(y)
-        return self.regcoef * np.eye(n) + 1 / self.m * self.matmat_ATsA(vec)
+        return self.regcoef * self.identity(n) + 1 / self.m * self.matmat_ATsA(vec)
 
 
 class LogRegL2OptimizedOracle(LogRegL2Oracle):
@@ -110,8 +121,8 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
 
     For explanation see LogRegL2Oracle.
     """
-    def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef):
-        super().__init__(matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef)
+    def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef, solver = default_solver):
+        super().__init__(matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef, solver)
 
     def func_directional(self, x, d, alpha):
         # TODO: Implement optimized version with pre-computation of Ax and Ad
@@ -127,16 +138,23 @@ def create_log_reg_oracle(A, b, regcoef, oracle_type='usual'):
     Auxiliary function for creating logistic regression oracles.
         `oracle_type` must be either 'usual' or 'optimized'
     """
-    matvec_Ax = lambda x: A @ x
-    matvec_ATx = lambda x: A.transpose() @ x
 
     if type(A) == scipy.sparse.csr_matrix:
+        A = A.tocsc()
         def matmat_ATsA(s):
             return A.transpose() @ scipy.sparse.diags(s) @ A
+        identity = lambda n : scipy.sparse.diags(np.ones(n))
+        def solver(hess, grad):
+            factor = sksparse.cholmod.cholesky(hess)
+            return factor(-grad)
     else:
         def matmat_ATsA(s):
             return A.transpose() @ np.diag(s) @ A
+        identity = np.eye
+        solver = default_solver
 
+    matvec_Ax = lambda x: A @ x
+    matvec_ATx = lambda x: A.transpose() @ x
 
     if oracle_type == 'usual':
         oracle = LogRegL2Oracle
@@ -144,7 +162,7 @@ def create_log_reg_oracle(A, b, regcoef, oracle_type='usual'):
         oracle = LogRegL2OptimizedOracle
     else:
         raise 'Unknown oracle_type=%s' % oracle_type
-    return oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef)
+    return oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef, identity, solver)
 
 
 
