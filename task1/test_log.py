@@ -2,7 +2,8 @@ import numpy as np
 from scipy.sparse import csr_matrix as csr
 import oracles
 from sys import exit
-from random import randint
+from random import randint, seed
+seed(12345)
 def my_grad(A, b, x, l):
     m = np.size(b)
     ans = l * x

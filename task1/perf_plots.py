@@ -6,6 +6,7 @@ plt.rcParams["figure.figsize"] = (10,4)
 import matplotlib.patches as mpatches
 import sys
 import scipy.sparse
+np.random.seed(12345)
 def generate_task(n, k):
     d = np.random.randint(1, k + 1, n)
     d[0] = 1
