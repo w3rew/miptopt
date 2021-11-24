@@ -111,15 +111,55 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
     For explanation see LogRegL2Oracle.
     """
     def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef):
-        super().__init__(matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef)
+        self.x = None
+        self.Ad = None
+        self.use_forwarded = False
+        self.Ax = None
+        self.x_0 = None
+        self.Ax_0 = None
+        def cached_matvec_Ax(x):
+            if self.use_forwarded:
+                return self.Ax
+            if np.array_equal(x, self.x):
+                return self.Ax
+            return matvec_Ax(x)
+
+        super().__init__(cached_matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef)
+    #    self.ATx = None
+    #    self.
 
     def func_directional(self, x, d, alpha):
-        # TODO: Implement optimized version with pre-computation of Ax and Ad
-        return None
+        print(self.x_0, x)
+        if not np.array_equal(self.x_0, x):
+            self.x_0 = x
+            if not np.array_equal(x, self.x):
+                self.Ax = self.matvec_Ax(x)
+                self.x = x
+            self.Ax_0 = self.Ax
+            self.Ad = self.matvec_Ax(d)
+        self.x = self.x_0 + alpha * d
+        self.Ax = self.Ax_0 + alpha * self.Ad
+        self.use_forwarded = True
+        res = super().func_directional(x, d, alpha)
+        self.use_forwarded = True
+        return res
+
 
     def grad_directional(self, x, d, alpha):
-        # TODO: Implement optimized version with pre-computation of Ax and Ad
-        return None
+        if not np.array_equal(self.x_0, x):
+            self.x_0 = x
+            if not np.array_equal(x, self.x):
+                self.Ax = self.matvec_Ax(x)
+                self.x = x
+            self.Ax_0 = self.Ax
+            self.Ad = self.matvec_Ax(d)
+        self.x = self.x_0 + alpha * d
+        self.Ax = self.Ax_0 + alpha * self.Ad
+        self.use_forwarded = True
+        res = super().grad_directional(x, d, alpha)
+        self.use_forwarded = True
+        return res
+
 
 
 def create_log_reg_oracle(A, b, regcoef, oracle_type='usual'):
