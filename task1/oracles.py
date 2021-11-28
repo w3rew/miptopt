@@ -118,18 +118,14 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
         self.x_0 = None
         self.Ax_0 = None
         def cached_matvec_Ax(x):
-            if self.use_forwarded:
-                return self.Ax
-            if np.array_equal(x, self.x):
-                return self.Ax
-            return matvec_Ax(x)
+            if not np.array_equal(x, self.x):
+                self.x = x
+                self.Ax = matvec_Ax(x)
+            return self.Ax
 
         super().__init__(cached_matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef)
-    #    self.ATx = None
-    #    self.
 
     def func_directional(self, x, d, alpha):
-        print(self.x_0, x)
         if not np.array_equal(self.x_0, x):
             self.x_0 = x
             if not np.array_equal(x, self.x):
@@ -139,9 +135,7 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
             self.Ad = self.matvec_Ax(d)
         self.x = self.x_0 + alpha * d
         self.Ax = self.Ax_0 + alpha * self.Ad
-        self.use_forwarded = True
         res = super().func_directional(x, d, alpha)
-        self.use_forwarded = True
         return res
 
 
@@ -155,9 +149,7 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
             self.Ad = self.matvec_Ax(d)
         self.x = self.x_0 + alpha * d
         self.Ax = self.Ax_0 + alpha * self.Ad
-        self.use_forwarded = True
         res = super().grad_directional(x, d, alpha)
-        self.use_forwarded = True
         return res
 
 
