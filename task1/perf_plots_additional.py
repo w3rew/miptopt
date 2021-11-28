@@ -39,7 +39,7 @@ def plot_history(history_usual, history_optimized, plot_type,) :
 
 def generate_task():
     m = 10000
-    n = 80000
+    n = 8000
     A = np.random.randn(m, n)
     b = np.sign(np.random.randn(m))
     x_0 = np.zeros(n)

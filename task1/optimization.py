@@ -85,7 +85,7 @@ class LineSearchTool(object):
             if previous_alpha is None:
                 alpha = self.alpha_0
             else:
-                alpha = previous_alpha #FIXME: 2 * previous_alpha
+                alpha = previous_alpha #FIXME: previous_alpha * 2
             return line_search_armijo(oracle, x_k, d_k, self.c1, alpha)
 
         if self._method == "Wolfe":
